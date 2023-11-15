@@ -51,6 +51,7 @@ public class GWackChannel{
                 GWackConnectedClient connectedClient = new GWackConnectedClient(clientSock, this);
                 connectedClient.start();
                 clientsConnect.add(connectedClient);
+                enqueueMessage();
                 
                 //continue looping
             }catch (IOException e) {
@@ -59,7 +60,7 @@ public class GWackChannel{
         }
     }
 
-public synchronized void enqueueMessage(String message) {
+public synchronized void enqueueMessage() {
    // queue.add(message);
     // make something like
     // START_CLIENT_LIST
@@ -70,18 +71,19 @@ public synchronized void enqueueMessage(String message) {
     
     try {
         for (GWackConnectedClient client : clientsConnect) {
-            PrintWriter pw = new PrintWriter(client.getSocket().getOutputStream());
-            pw.println("START_CLIENT_LIST");
-            pw.flush();
+            System.out.println("Sending message to" + client.getName());
+           // PrintWriter pw = new PrintWriter(client.getSocket().getOutputStream());
+            client.pw.println("START_CLIENT_LIST");
+            // pw.flush();
             for (GWackConnectedClient connectedClient : clientsConnect) {
-                pw.println(connectedClient.getClientName());
-                pw.flush();
+                client.pw.println(connectedClient.getClientName());
             }
-            pw.println("END_CLIENT_LIST");
-            pw.flush();
+            client.pw.println("END_CLIENT_LIST");
+            client.pw.flush();
+            //pw.close();
         }
     } 
-    catch (IOException e) {
+    catch (Exception e) {
         e.printStackTrace();
     }
 }
@@ -105,10 +107,11 @@ public synchronized void enqueueMessage(String message) {
 
 
 public synchronized void dequeueAll() {
-    for (GWackConnectedClient client : clientsConnect) {
-        for (String message : queue) {
-            client.sendMessage(message);
-        }
+    for (String message : queue) {
+        sendMessage(message);
+        // for (GWackConnectedClient client : clientsConnect) {
+        //     client.sendMessage(message);
+        // }
     }
 }
 
@@ -125,6 +128,18 @@ public synchronized void removeClients() {
         if (!client.isValid()) {
             clientsConnect.remove(client);
         }
+    }
+}
+
+public void sendMessage(String message){
+    try {
+        for (GWackConnectedClient client : clientsConnect) {
+            PrintWriter pw = new PrintWriter(client.getSocket().getOutputStream());
+            pw.println(message);
+            pw.flush();
+        }
+    } catch (IOException e) {
+        e.printStackTrace();
     }
 }
 

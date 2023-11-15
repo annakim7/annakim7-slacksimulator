@@ -11,7 +11,7 @@ and run() */
 
 class GWackConnectedClient extends Thread{
     private Socket socket;
-    private PrintWriter pw;
+    public PrintWriter pw;
     private BufferedReader br;
     private GWackChannel channel;
     private volatile boolean connect;
@@ -29,10 +29,6 @@ class GWackConnectedClient extends Thread{
         }
     }
 
-    public void sendMessage(String message){
-        pw.println(message);
-    }
-
     public boolean isValid(){
         return connect;
     }
@@ -44,6 +40,7 @@ class GWackConnectedClient extends Thread{
     public Socket getSocket() {
         return socket;
     }
+    
 
     @Override
     public void run(){
@@ -64,13 +61,15 @@ class GWackConnectedClient extends Thread{
             }
             name = br.readLine();
 
-            String yas = "" + channel.getClientList();
-            channel.enqueueMessage(yas);
+            // this is the name, need it to go into members online
+            //String yas = "" + channel.getClientList();
+            //channel.sendMessage(yas);
             
-            String msg = "";
-            while((msg = br.readLine()) != null){
-                channel.enqueueMessage(msg);
-                channel.dequeueAll();
+            String msg = br.readLine();
+            while(msg != null){
+                channel.sendMessage("[" + name + "]" + " " + msg);
+                //channel.dequeueAll();
+                msg = br.readLine();
             }
         }
         catch (IOException e) {
@@ -82,7 +81,7 @@ class GWackConnectedClient extends Thread{
             br.close();
             socket.close();
             channel.removeClients();
-            channel.enqueueMessage("" + channel.getClientList());
+            channel.sendMessage("" + channel.getClientList());
             channel.dequeueAll();
         }
         catch(IOException e){
